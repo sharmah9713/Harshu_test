@@ -1,0 +1,70 @@
+K8s Interview 
+
+1. Ingress controller 
+2. Helm-chart, loop
+3. Key-clock for Oauth
+4. Helpers.tpl
+5. Canary deployment
+6. Blue-green deployment 
+7. Monitoring and alert manager
+8. Istio
+9. Daemon set
+10. Init container
+11. Sidecar
+12. Readiness and livenessprobe
+13. Service mash
+14. Volumes (Static, Dynamic )
+15. Statefulset (Headless service)
+16. Cluster autoscaling
+17. Dex helm chart
+18. Resourcequota
+19. Rollout
+20. Secret injection 
+21. Taint & tolerance 
+22. Pod Affinity and Pod Anti-Affinity 
+
+
+	1.	Ingress Controller: Manages external access to services inside a Kubernetes cluster, typically using HTTP/HTTPS. It routes requests based on rules defined in Ingress resources. Example: NGINX or Traefik.
+	
+	2.	Helm-Chart, Loop: Helm charts are templates for Kubernetes resources, enabling reusable and parameterized configurations. Loops in Helm templates (using range) allow repetitive tasks, like generating multiple resources dynamically.
+	
+	3.	Keycloak for OAuth: Keycloak is an open-source identity and access management tool used to implement OAuth2 and OpenID Connect for authentication and authorization in applications.
+	
+	4.	Helpers.tpl: A reusable template file in Helm charts where common functions and logic can be defined to avoid redundancy in multiple template files.
+	
+	5.	Canary Deployment: A strategy where a new version of an application is released to a small subset of users to monitor for issues before rolling out to everyone.
+	
+	6.	Blue-Green Deployment: Maintains two environments (blue and green). The current version (blue) serves traffic while the new version (green) is prepared. Traffic switches to green after validation, ensuring zero downtime.
+	
+	7.	Monitoring and Alert Manager: Tools like Prometheus collect metrics, and Alertmanager triggers alerts based on defined conditions, helping monitor the health of applications and infrastructure.
+	
+	8.	Istio: A service mesh for managing communication between microservices. It provides traffic control, security, observability, and advanced routing capabilities.
+	
+	9.	Daemon Set: Ensures a specific pod runs on every or selected nodes in a cluster. Use cases include logging, monitoring, or networking agents.
+	
+	10.	Init Container: A container in a pod that runs before the main application container starts, used for setup tasks like configuration or dependencies.
+	
+	11.	Sidecar: An additional container in a pod that enhances the main application. Common use cases include logging agents, proxy servers, or data synchronization.
+	
+	12.	Readiness and Liveness Probes: Mechanisms to check the health of a pod. Readiness determines if a pod is ready to handle traffic, while Liveness detects if a pod needs to be restarted.
+	
+	13.	Service Mesh: A dedicated infrastructure layer for managing communication between microservices. It handles tasks like traffic control, security, and observability (e.g., Istio, Linkerd).
+	
+	14.	Volumes (Static, Dynamic): Kubernetes provides persistent storage to pods. Static volumes are pre-created by administrators, while dynamic volumes are provisioned automatically based on requests.
+	
+	15.	StatefulSet (Headless Service): Manages stateful applications that require stable network identities and persistent storage. Headless services enable direct pod-to-pod communication without load balancing.
+	
+	16.	Cluster Autoscaling: Automatically adds or removes nodes in the cluster based on resource demand, ensuring cost-efficiency and optimal resource usage.
+	
+	17.	Dex Helm Chart: A Helm chart to deploy Dex, an identity provider that supports OpenID Connect, commonly integrated with Kubernetes for authentication.
+	
+	18.	ResourceQuota: Enforces limits on the resource usage (CPU, memory, storage, etc.) within a namespace to prevent resource overconsumption.
+	
+	19.	Rollout: A gradual deployment strategy for updating applications. Kubernetes supports features like rollback if issues occur during a rollout.
+	
+	20.	Secret Injection: Kubernetes securely injects sensitive data like passwords or API keys into pods using environment variables or mounted volumes, ensuring secure data handling.
+	
+	21.	Taint & Tolerance: Mechanism for controlling pod scheduling. Nodes can have taints to repel certain pods, while tolerations in pods allow them to tolerate those taints.
+	
+	22.	Pod Affinity and Anti-Affinity: Rules to control pod placement. Affinity ensures pods are co-located (on the same node or zone), while anti-affinity ensures separation for high availability or resource distribution.
+
