@@ -1,0 +1,95 @@
+Creating an Amazon EKS cluster using Terraform involves multiple components, including the VPC, subnets, IAM roles, security groups, and the EKS cluster itself. Below is a step-by-step Terraform configuration:
+
+1. Install Dependencies
+
+Ensure you have:
+	•	Terraform installed (terraform -v)
+	•	AWS CLI configured (aws configure)
+	•	kubectl installed (kubectl version --client)
+
+2. Create Terraform Configuration
+
+main.tf (Terraform provider and EKS module)
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+module "eks" {
+  source          = "terraform-aws-modules/eks/aws"
+  cluster_name    = "my-eks-cluster"
+  cluster_version = "1.27"
+
+  subnet_ids = module.vpc.private_subnets
+  vpc_id     = module.vpc.vpc_id
+
+  enable_irsa = true
+
+  node_groups = {
+    eks_nodes = {
+      desired_capacity = 2
+      max_capacity     = 3
+      min_capacity     = 1
+
+      instance_types = ["t3.medium"]
+      key_name       = "my-key-pair"
+    }
+  }
+}
+
+vpc.tf (VPC module for networking)
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  name    = "eks-vpc"
+  cidr    = "10.0.0.0/16"
+
+  azs             = ["us-east-1a", "us-east-1b"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
+
+  enable_nat_gateway = true
+  enable_dns_hostnames = true
+}
+
+outputs.tf (Output important details)
+
+output "eks_cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_arn" {
+  value = module.eks.cluster_arn
+}
+
+3. Deploy the EKS Cluster
+
+Initialize Terraform
+
+terraform init
+
+Plan the deployment
+
+terraform plan
+
+Apply the deployment
+
+terraform apply -auto-approve
+
+4. Configure kubectl to Use the New Cluster
+
+aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
+
+Verify cluster connection:
+
+kubectl get nodes
+
+5. Destroy EKS Cluster (If Needed)
+
+terraform destroy -auto-approve
+
+This setup creates a highly available EKS cluster with worker nodes, networking, and IAM roles. Let me know if you need modifications!
