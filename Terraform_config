@@ -1,95 +1,223 @@
-Creating an Amazon EKS cluster using Terraform involves multiple components, including the VPC, subnets, IAM roles, security groups, and the EKS cluster itself. Below is a step-by-step Terraform configuration:
+Below is the complete Terraform structure to create an AWS EKS cluster using only t2.micro instances (which are free-tier eligible). The setup includes VPC, subnets, security groups, IAM roles, and EKS cluster.
 
-1. Install Dependencies
+Directory Structure
 
-Ensure you have:
-	•	Terraform installed (terraform -v)
-	•	AWS CLI configured (aws configure)
-	•	kubectl installed (kubectl version --client)
+eks-cluster/
+│── main.tf
+│── vpc.tf
+│── eks.tf
+│── security.tf
+│── outputs.tf
+│── variables.tf
+│── provider.tf
+│── versions.tf
+│── terraform.tfvars
 
-2. Create Terraform Configuration
+1. versions.tf (Terraform version and provider requirements)
 
-main.tf (Terraform provider and EKS module)
+terraform {
+  required_version = ">= 1.3.0"
 
-provider "aws" {
-  region = "us-east-1"
-}
-
-module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  cluster_name    = "my-eks-cluster"
-  cluster_version = "1.27"
-
-  subnet_ids = module.vpc.private_subnets
-  vpc_id     = module.vpc.vpc_id
-
-  enable_irsa = true
-
-  node_groups = {
-    eks_nodes = {
-      desired_capacity = 2
-      max_capacity     = 3
-      min_capacity     = 1
-
-      instance_types = ["t3.medium"]
-      key_name       = "my-key-pair"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
 
-vpc.tf (VPC module for networking)
+2. provider.tf (AWS provider configuration)
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  name    = "eks-vpc"
-  cidr    = "10.0.0.0/16"
-
-  azs             = ["us-east-1a", "us-east-1b"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
-
-  enable_nat_gateway = true
-  enable_dns_hostnames = true
+provider "aws" {
+  region = var.aws_region
 }
 
-outputs.tf (Output important details)
+3. variables.tf (Define all variables)
+
+variable "aws_region" {
+  description = "AWS region for EKS cluster"
+  default     = "us-east-1"
+}
+
+variable "cluster_name" {
+  description = "EKS Cluster Name"
+  default     = "my-eks-cluster"
+}
+
+variable "instance_type" {
+  description = "EC2 instance type for worker nodes"
+  default     = "t2.micro"
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_cidrs" {
+  description = "Private subnets for EKS worker nodes"
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+}
+
+4. vpc.tf (Create VPC, subnets, and networking)
+
+resource "aws_vpc" "eks_vpc" {
+  cidr_block = var.vpc_cidr
+  enable_dns_support = true
+  enable_dns_hostnames = true
+  tags = {
+    Name = "eks-vpc"
+  }
+}
+
+resource "aws_subnet" "private_subnets" {
+  count = length(var.subnet_cidrs)
+
+  vpc_id            = aws_vpc.eks_vpc.id
+  cidr_block        = var.subnet_cidrs[count.index]
+  availability_zone = element(["us-east-1a", "us-east-1b"], count.index)
+
+  tags = {
+    Name = "private-subnet-${count.index}"
+  }
+}
+
+5. security.tf (Create security group for EKS)
+
+resource "aws_security_group" "eks_sg" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "eks-sg"
+  }
+}
+
+6. eks.tf (Create EKS cluster and node group)
+
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_eks_cluster" "eks" {
+  name     = var.cluster_name
+  role_arn = aws_iam_role.eks_cluster_role.arn
+
+  vpc_config {
+    subnet_ids = aws_subnet.private_subnets[*].id
+  }
+
+  tags = {
+    Name = var.cluster_name
+  }
+}
+
+resource "aws_iam_role" "eks_node_role" {
+  name = "eks-node-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_eks_node_group" "eks_nodes" {
+  cluster_name    = aws_eks_cluster.eks.name
+  node_group_name = "eks-node-group"
+  node_role_arn   = aws_iam_role.eks_node_role.arn
+  subnet_ids      = aws_subnet.private_subnets[*].id
+
+  scaling_config {
+    desired_size = 1
+    max_size     = 1
+    min_size     = 1
+  }
+
+  instance_types = [var.instance_type]
+
+  tags = {
+    Name = "eks-node-group"
+  }
+}
+
+7. outputs.tf (Display cluster details after deployment)
 
 output "eks_cluster_name" {
-  value = module.eks.cluster_name
+  value = aws_eks_cluster.eks.name
 }
 
 output "eks_cluster_endpoint" {
-  value = module.eks.cluster_endpoint
+  value = aws_eks_cluster.eks.endpoint
 }
 
 output "eks_cluster_arn" {
-  value = module.eks.cluster_arn
+  value = aws_eks_cluster.eks.arn
 }
 
-3. Deploy the EKS Cluster
+8. terraform.tfvars (Custom values for variables)
 
-Initialize Terraform
+aws_region    = "us-east-1"
+cluster_name  = "my-eks-cluster"
+instance_type = "t2.micro"
+
+Deployment Steps
+	1.	Initialize Terraform
 
 terraform init
 
-Plan the deployment
+
+	2.	Plan the deployment
 
 terraform plan
 
-Apply the deployment
+
+	3.	Apply the configuration
 
 terraform apply -auto-approve
 
-4. Configure kubectl to Use the New Cluster
+
+	4.	Configure kubectl
 
 aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
 
-Verify cluster connection:
+
+	5.	Verify the EKS cluster
 
 kubectl get nodes
 
-5. Destroy EKS Cluster (If Needed)
+Destroy the Cluster (If Needed)
 
 terraform destroy -auto-approve
 
-This setup creates a highly available EKS cluster with worker nodes, networking, and IAM roles. Let me know if you need modifications!
+This Terraform setup creates an EKS cluster using free-tier t2.micro instances and includes VPC, IAM roles, security groups, and private subnets. Let me know if you need modifications!
