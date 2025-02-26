@@ -8,14 +8,9 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                Checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    urlRemoteConfigs: [[
-                        url: 'https://github.com/sharmah9713/Harshu_test.git',
-                        credentialsId: 'github-credentials'
-                    ]]
-                ])
+                git branch: 'main',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/sharmah9713/Harshu_test.git',
             }
         }
 
