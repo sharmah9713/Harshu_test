@@ -10,7 +10,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     credentialsId: 'github-credentials',
-                    url: 'https://github.com/sharmah9713/Harshu_test.git',
+                    url: 'https://github.com/sharmah9713/Harshu_test.git'
             }
         }
 
