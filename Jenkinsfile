@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "your-dockerhub-username/hello-world:latest"
+        DOCKER_IMAGE = "sharmah9713/hello-world:latest"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/sharmah9713/sharmah9713.git'
+                git 'https://github.com/sharmah9713/Harshu_test.git'
             }
         }
 
